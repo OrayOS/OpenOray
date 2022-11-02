@@ -1,28 +1,41 @@
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/target.mk
 
+ifneq ($(CONFIG_USE_UCLIBC),)
+  PKG_LIBC_V:=uClibc-1.0.x
+else
+  PKG_LIBC_V:=$(LIBC)-unknown
+endif
+
 ifeq ($(ARCH),arm)
   ifneq ($(findstring $(CPU_SUBTYPE), neon neon-vfpv4 vfpv3),)
-	PKG_ARCH_PGYYPN:=arm_$(CPU_TYPE)_$(CPU_SUBTYPE)-musl-unknown
+	PKG_ARCH_PGYYPN:=arm_$(CPU_TYPE)_$(CPU_SUBTYPE)-$(PKG_LIBC_V)
   else
-	PKG_ARCH_PGYYPN:=arm_cortex-a7-musl-unknown
+	PKG_ARCH_PGYYPN:=arm_cortex-a7-$(PKG_LIBC_V)
   endif
 endif
 ifeq ($(ARCH),aarch64)
   ifneq ($(findstring $(CPU_TYPE), cortex-a53 cortex-a72),)
-	PKG_ARCH_PGYYPN:=aarch64_$(CPU_TYPE)-musl-unknown
+	PKG_ARCH_PGYYPN:=aarch64_$(CPU_TYPE)-$(PKG_LIBC_V)
   else
-	PKG_ARCH_PGYYPN:=aarch64_generic-musl-unknown
+	PKG_ARCH_PGYYPN:=aarch64_generic-$(PKG_LIBC_V)
   endif
 endif
+ifeq ($(ARCH),mips)
+	PKG_ARCH_PGYYPN:=mips_24kc-$(PKG_LIBC_V)
+endif
 ifeq ($(ARCH),mipsel)
-	PKG_ARCH_PGYYPN:=mipsel_24kc-musl-unknown
+  ifneq ($(findstring $(CPU_TYPE), 24kec 74kc 1004kc),)
+	PKG_ARCH_PGYYPN:=$(ARCH)_$(CPU_TYPE)-$(PKG_LIBC_V)
+  else
+	PKG_ARCH_PGYYPN:=mipsel_24kc-$(PKG_LIBC_V)
+  endif
 endif
 ifeq ($(BOARD),x86)
   ifeq ($(ARCH),x86_64)
-	PKG_ARCH_PGYYPN:=x86_64-musl-unknown
+	PKG_ARCH_PGYYPN:=x86_64-$(PKG_LIBC_V)
   else
-	PKG_ARCH_PGYYPN:=i386_pentium-mmx-musl-unknown
+	PKG_ARCH_PGYYPN:=i386_pentium-mmx-$(PKG_LIBC_V)
   endif
 endif
 
@@ -43,7 +56,7 @@ define Package/pgyvpn
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=VPN
-  DEPENDS:=@(arm||aarch64||mipsel||i386||x86_64) \
+  DEPENDS:=@(arm||aarch64||mips||mipsel||i386||x86_64) \
 	+iptables +libc +libopenssl +librt \
 	+libpthread +libstdcpp +kmod-tun
   TITLE:=PuGongYing VPN, Fast networking
